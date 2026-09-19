@@ -11,7 +11,9 @@ export XDG_DATA_DIRS="$root/install/share:/usr/local/share:/usr/share"
 export QT_QPA_PLATFORM=xcb LIBGL_ALWAYS_SOFTWARE=1 LANGUAGE=en_US LC_ALL=C.UTF-8
 export CAPTHEME_UI_TEST=1 CAPTHEME_SCREENSHOT="$root/artifacts/captheme.png"
 # Apply LD_PRELOAD only to the editor, not Xvfb, the shell, or dbus-daemon.
-for pass in first restart; do
+for pass in first restart captions; do
+    unset CAPTHEME_TEST_CAPTIONS
+    if [[ "$pass" == captions ]]; then export CAPTHEME_TEST_CAPTIONS=1; fi
     timeout 60s xvfb-run -a -s '-screen 0 1920x1080x24' \
         dbus-run-session -- env LD_PRELOAD="$root/artifacts/ui-smoke.so" \
         "$root/install/bin/kdenlive" --config capthemerc --no-welcome \

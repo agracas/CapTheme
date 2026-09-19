@@ -69,14 +69,15 @@ Para atualizar essa cópia posteriormente, feche o programa e execute
 preserva a primeira versão e não inclui o novo painel.
 
 - Tema grafite com seleção verde-água, abas e campos compactos.
-- Barra com Importar, Mídia, Áudio, Texto, Efeitos, Composições, Legendas e Exportar.
+- Barra superior com Importar, Desfazer/Refazer e Exportar; categorias de edição em uma faixa própria com ícones.
+- Campos, menus, listas, abas e barras de rolagem com acabamento escuro consistente.
 - Mídia à esquerda, monitor ao centro, propriedades à direita, timeline embaixo.
 - Os botões usam os comandos reais do Kdenlive, inclusive seus estados habilitados.
 - O layout é criado no primeiro uso. Alterações posteriores são preservadas.
 - **Reset Workspace** restaura a organização proposta; os menus completos ficam no botão de menu.
 
-“Áudio” abre o mixer; “Texto” cria um título; “Legendas” adiciona uma legenda à
-timeline. “Composições” abre as composições do Kdenlive. Essas funções não são
+“Áudio” abre o mixer; “Texto” cria um título; “Legendas” abre a geração automática
+a partir do áudio da timeline. “Composições” abre as composições do Kdenlive. Essas funções não são
 catálogos online do CapCut. O projeto não inclui recursos, serviços ou marcas do CapCut.
 
 Para abrir o fork com a interface original e configurações separadas:
@@ -84,6 +85,19 @@ Para abrir o fork com a interface original e configurações separadas:
 ```sh
 CAPTHEME_CLASSIC=1 ./run.sh --config classicrc
 ```
+
+### Legendas automáticas
+
+1. Coloque o vídeo ou áudio na timeline.
+2. Clique em **Captions / Legendas** para abrir **Automatic Subtitling**, a ferramenta nativa do Kdenlive.
+3. Se necessário, use **Configure** no diálogo para configurar o reconhecimento de fala e instalar as dependências e um modelo Whisper ou Vosk.
+4. Selecione o modelo, o idioma quando disponível e o trecho a analisar (timeline, zona, faixa ou clipes selecionados). Clique em **Process**.
+5. Revise o resultado na faixa de legendas. A seta ao lado de **Captions** também oferece criação manual, importação, exportação e gerenciamento de legendas.
+
+Os motores e modelos seguem a configuração do Kdenlive dentro do perfil isolado
+do CapTheme. Não estão incluídos na distribuição; sua instalação pode exigir
+internet e espaço em disco. O teste gráfico verifica a abertura do diálogo real,
+mas não baixa modelos nem valida a qualidade da transcrição.
 
 ## Código
 
@@ -136,7 +150,8 @@ exclusivos dele. As mudanças do fork seguem a licença GPL do Kdenlive.
 Compilado e instalado localmente com GCC 16, Qt 6.11.2, KDE Frameworks 6.30 e MLT 7.40.
 O teste gráfico passou na primeira abertura e após reiniciar: posição e visibilidade
 dos painéis, paleta, menu compacto, comando de exportação, navegação para efeitos,
-restauração repetida do workspace e fechamento normal. A captura acima foi feita
+restauração repetida do workspace e fechamento normal. Uma terceira abertura
+verifica o diálogo nativo de legendas automáticas e seus seletores de modelo e trecho. A captura acima foi feita
 no executável real em uma tela virtual de 1920×1080, com janela de 1600×960.
 
 Para repetir (requer `xorg-server-xvfb`):

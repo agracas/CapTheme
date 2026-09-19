@@ -213,8 +213,8 @@ void AssetPanel::setupCapThemeInspector()
     m_capThemeInspector->setObjectName(QStringLiteral("capthemeInspector"));
     m_capThemeInspector->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
     auto *layout = new QVBoxLayout(m_capThemeInspector);
-    layout->setContentsMargins(12, 12, 12, 10);
-    layout->setSpacing(8);
+    layout->setContentsMargins(10, 8, 10, 8);
+    layout->setSpacing(6);
     auto *title = new QLabel(i18n("Clip properties"), m_capThemeInspector);
     title->setObjectName(QStringLiteral("capthemeInspectorTitle"));
     layout->addWidget(title);
@@ -224,7 +224,7 @@ void AssetPanel::setupCapThemeInspector()
         button->setObjectName(name);
         button->setText(text);
         button->setIcon(QIcon::fromTheme(icon));
-        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
         buttons->addWidget(button);
         connect(button, &QToolButton::clicked, this, [this, effectId]() {
@@ -261,8 +261,7 @@ void AssetPanel::updateCapThemeInspector(bool video, bool audio)
     m_capThemeTransform->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtblend")));
     m_capThemeCrop->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtcrop")));
     m_capThemeVolume->setEnabled(audio && EffectsRepository::get()->exists(QStringLiteral("volume")));
-    m_capThemeHint->setText(video || audio ? i18n("Open a section to adjust this clip. Use the diamond in the effect controls to add keyframes at the "
-                                                  "playhead; the arrows navigate between them.")
+    m_capThemeHint->setText(video || audio ? i18n("Adjust this clip below. Use the diamond to add keyframes.")
                                            : i18n("Select a clip in the timeline or project bin to edit its properties. Timeline adjustments affect that "
                                                   "instance; bin adjustments affect the source clip."));
 }

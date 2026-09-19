@@ -106,24 +106,35 @@ void MainWindow::setupCapTheme()
 
     // Proxies follow the real QAction's enabled state and invoke the same editing
     // command, without changing its name, shortcuts or labels elsewhere.
-    auto addCommand = [this, header](const QString &id, const QString &label, const QString &objectName = QString()) {
+    auto addCommand = [this](QToolBar *bar, const QString &id, const QString &label, const QString &objectName = QString()) {
         QAction *command = actionCollection()->action(id);
         if (!command) {
             return;
         }
-        auto *button = new QToolButton(header);
+        auto *button = new QToolButton(bar);
         button->setObjectName(objectName);
         button->setDefaultAction(command);
         button->setToolButtonStyle(objectName == QStringLiteral("capthemeExport") ? Qt::ToolButtonTextOnly : Qt::ToolButtonTextBesideIcon);
         button->setText(label);
         connect(command, &QAction::changed, button, [button, label]() { button->setText(label); });
-        header->addWidget(button);
+        bar->addWidget(button);
     };
-    addCommand(QStringLiteral("add_clip"), i18n("Import"));
+    addCommand(header, QStringLiteral("add_clip"), i18n("Import"));
     header->addSeparator();
+    addCommand(header, QStringLiteral("edit_undo"), i18n("Undo"));
+    addCommand(header, QStringLiteral("edit_redo"), i18n("Redo"));
 
-    auto addPanel = [this, header](const QString &label, const QString &icon, KDDockWidgets::QtWidgets::DockWidget *dock) {
-        QAction *action = header->addAction(QIcon::fromTheme(icon), label);
+    auto *navigation = new QToolBar(i18n("Editing tools"), this);
+    navigation->setObjectName(QStringLiteral("capthemeNavigation"));
+    navigation->setMovable(false);
+    navigation->setFloatable(false);
+    navigation->setIconSize(QSize(22, 22));
+    navigation->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    addToolBarBreak(Qt::TopToolBarArea);
+    addToolBar(Qt::TopToolBarArea, navigation);
+
+    auto addPanel = [this, navigation](const QString &label, const QString &icon, KDDockWidgets::QtWidgets::DockWidget *dock) {
+        QAction *action = navigation->addAction(QIcon::fromTheme(icon), label);
         action->setCheckable(true);
         action->setChecked(dock->asDockWidgetController()->isCurrentTab());
         connect(action, &QAction::triggered, this, [dock]() {
@@ -139,10 +150,37 @@ void MainWindow::setupCapTheme()
     };
     addPanel(i18n("Media"), QStringLiteral("folder-videos"), m_projectBinDock);
     addPanel(i18n("Audio"), QStringLiteral("audio-volume-high"), m_mixerDock);
-    addCommand(QStringLiteral("add_text_clip"), i18n("Text"));
+    addCommand(navigation, QStringLiteral("add_text_clip"), i18n("Text"));
     addPanel(i18n("Effects"), QStringLiteral("tools-wizard"), m_effectListDock);
     addPanel(i18n("Compositions"), QStringLiteral("view-filter"), m_compositionListDock);
-    addCommand(QStringLiteral("add_subtitle"), i18n("Captions"));
+    // Reuse the native recognition action: it creates the subtitle track and
+    // opens SpeechDialog with the user's engine, models and language settings.
+    if (auto *recognition = actionCollection()->action(QStringLiteral("audio_recognition"))) {
+        auto *captions = new QToolButton(navigation);
+        captions->setObjectName(QStringLiteral("capthemeCaptions"));
+        captions->setDefaultAction(recognition);
+        captions->setText(i18n("Captions"));
+        captions->setToolTip(i18n("Generate automatic captions from timeline audio"));
+        captions->setPopupMode(QToolButton::MenuButtonPopup);
+        auto *menu = new QMenu(captions);
+        menu->addSection(i18n("Automatic captions"));
+        menu->addAction(recognition);
+        menu->addSeparator();
+        for (const auto &id : {"add_subtitle", "import_subtitle", "export_subtitle", "manage_subtitle"}) {
+            if (auto *command = actionCollection()->action(QString::fromLatin1(id))) {
+                menu->addAction(command);
+            }
+        }
+        captions->setMenu(menu);
+        connect(recognition, &QAction::changed, captions, [captions]() {
+            captions->setText(i18n("Captions"));
+            captions->setToolTip(i18n("Generate automatic captions from timeline audio"));
+        });
+        navigation->addWidget(captions);
+    }
+    for (auto *button : navigation->findChildren<QToolButton *>()) {
+        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    }
 
     auto *spacer = new QWidget(header);
     spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
@@ -150,7 +188,7 @@ void MainWindow::setupCapTheme()
     auto *layout = header->addAction(QIcon::fromTheme(QStringLiteral("view-restore")), i18n("Reset Workspace"));
     layout->setToolTip(i18n("Restore the CapTheme panel arrangement"));
     connect(layout, &QAction::triggered, this, &MainWindow::resetCapThemeLayout);
-    addCommand(QStringLiteral("project_render"), i18n("Export"), QStringLiteral("capthemeExport"));
+    addCommand(header, QStringLiteral("project_render"), i18n("Export"), QStringLiteral("capthemeExport"));
 
     KConfigGroup config(KSharedConfig::openConfig(), QStringLiteral("CapTheme"));
     if (!config.readEntry("WorkspaceInitialized", false)) {

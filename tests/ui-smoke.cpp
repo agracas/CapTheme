@@ -3,6 +3,8 @@
 #include <QApplication>
 #include <QAction>
 #include <QFile>
+#include <QDialog>
+#include <QMenu>
 #include <QMainWindow>
 #include <QMenuBar>
 #include <QScreen>
@@ -65,9 +67,42 @@ static void checkInterface()
         require(!exportButton->isEnabled(), "export follows disabled command state");
         command->setEnabled(enabled);
 
+        auto *navigation = qobject_cast<QToolBar *>(widget(QStringLiteral("capthemeNavigation")));
+        require(navigation && navigation->isVisible(), "editing categories have a separate navigation strip");
+        auto *captions = qobject_cast<QToolButton *>(widget(QStringLiteral("capthemeCaptions")));
+        require(captions && captions->defaultAction(), "captions uses the native recognition action");
+        require(captions->defaultAction()->objectName() == QStringLiteral("audio_recognition"), "captions invokes automatic subtitling");
+        require(captions->menu() && captions->menu()->actions().contains(captions->defaultAction()), "automatic captions is also available in the menu");
+        for (const auto &id : {"add_subtitle", "import_subtitle", "export_subtitle", "manage_subtitle"}) {
+            bool found = false;
+            for (auto *action : captions->menu()->actions()) found |= action->objectName() == QString::fromLatin1(id);
+            require(found, "native subtitle editing command remains available");
+        }
+        auto *recognition = captions->defaultAction();
+        const bool recognitionEnabled = recognition->isEnabled();
+        recognition->setEnabled(false);
+        require(!captions->isEnabled(), "captions follows the native command availability");
+        recognition->setEnabled(recognitionEnabled);
+
+        if (qEnvironmentVariableIsSet("CAPTHEME_TEST_CAPTIONS")) {
+            require(recognitionEnabled, "recognition is available for the current project");
+            QTimer::singleShot(4000, window, []() {
+                auto *dialog = qobject_cast<QDialog *>(QApplication::activeModalWidget());
+                require(dialog && dialog->windowTitle() == QStringLiteral("Automatic Subtitling"), "captions opens the real automatic subtitling dialog");
+                require(dialog->findChild<QWidget *>(QStringLiteral("speech_model")), "native speech model selection is present");
+                require(dialog->findChild<QWidget *>(QStringLiteral("timeline_full")), "native transcription scope selection is present");
+                dialog->reject();
+                // The native action creates a subtitle track. Exit this isolated
+                // test without a save prompt; never touch a user project.
+                QTimer::singleShot(0, qApp, []() { std::_Exit(0); });
+            });
+            captions->click();
+            return;
+        }
+
         QAction *effects = nullptr;
         QAction *reset = nullptr;
-        for (QAction *action : header->actions()) {
+        for (QAction *action : header->actions() + navigation->actions()) {
             if (action->text() == QStringLiteral("Effects")) effects = action;
             if (action->text() == QStringLiteral("Reset Workspace")) reset = action;
         }

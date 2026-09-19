@@ -2,6 +2,11 @@
 
 ## Em desenvolvimento
 
+- Barra de projeto e navegação por categorias separadas, com ícones acima dos rótulos.
+- Polimento de campos, botões, abas, listas e barras de rolagem em superfícies escuras.
+- Legendas abre a ferramenta nativa de transcrição automática (Whisper/Vosk); menu preserva edição manual, importação, exportação e gerenciamento.
+- Teste gráfico da abertura do diálogo de legendas e disponibilidade das ações nativas.
+
 - Painel Details com atalhos para transformação, recorte e volume do clipe selecionado.
 - Acesso direto aos controles nativos de posição, escala, rotação, opacidade e keyframes.
 - Reabertura do efeito existente sem duplicar efeitos ou substituir parâmetros.
