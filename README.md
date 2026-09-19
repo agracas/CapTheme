@@ -54,6 +54,20 @@ projetos: `./run.sh /caminho/projeto.kdenlive`.
 
 ## Interface
 
+Para experimentar o painel atualizado na versão de desenvolvimento (ainda alpha),
+baixe a branch `main` em uma nova pasta:
+
+```sh
+git clone --branch main https://github.com/agracas/CapTheme.git CapTheme-dev
+cd CapTheme-dev
+./build.sh
+./run.sh
+```
+
+Para atualizar essa cópia posteriormente, feche o programa e execute
+`git pull --ff-only`, `./build.sh` e `./run.sh`. A release `v0.1.0-alpha.1`
+preserva a primeira versão e não inclui o novo painel.
+
 - Tema grafite com seleção verde-água, abas e campos compactos.
 - Barra com Importar, Mídia, Áudio, Texto, Efeitos, Composições, Legendas e Exportar.
 - Mídia à esquerda, monitor ao centro, propriedades à direita, timeline embaixo.
@@ -73,9 +87,45 @@ CAPTHEME_CLASSIC=1 ./run.sh --config classicrc
 
 ## Código
 
+### Painel Details: transformação e animação
+
+Na versão de desenvolvimento, selecione um clipe e use os atalhos no painel direito:
+
+- **Transform**: posição X/Y, escala, largura/altura, opacidade, rotação e ponto de rotação.
+- **Crop**: recorte por retângulo, cantos arredondados ou círculo, com preenchimento.
+- **Volume**: ganho de áudio com animação por keyframes.
+
+O primeiro clique adiciona o efeito correspondente; os próximos abrem o efeito já
+existente, preservando seus valores. Sem um clipe selecionado, os atalhos ficam
+desabilitados. Controles de vídeo e áudio acompanham o tipo de clipe selecionado.
+
+Nos controles do efeito, mova o cursor e use o botão de losango para adicionar ou
+remover keyframes. As setas navegam entre eles; os ajustes usam o desfazer/refazer
+e o formato de projeto do Kdenlive. Na timeline, as mudanças afetam a instância
+selecionada; na biblioteca de mídia, afetam o clipe de origem.
+
+O controle de rotação pode depender da versão do efeito Transform fornecida pelo MLT.
+
+![Inspector com parâmetros e keyframes reais](docs/inspector.png)
+
+Teste do inspector:
+
+```sh
+./tests/inspector-smoke.sh
+```
+
+O teste importa um vídeo sintético com áudio, altera escala, opacidade e posição,
+confere desfazer/refazer e ausência de duplicação, cria um segundo keyframe e salva
+o projeto. A validação do XML confirma os valores e os dois keyframes persistidos.
+Os arquivos de teste e a captura ficam em `artifacts/`.
+
+### Arquivos principais
+
 - `kdenlive/src/captheme.cpp`: barra, comandos e organização dos painéis.
 - `kdenlive/data/captheme/`: paleta KDE e stylesheet Qt embutidos no executável.
 - `kdenlive/src/mainwindow.cpp`: integração após restauração do workspace.
+- `kdenlive/src/assets/assetpanel.cpp`: atalhos e contexto do inspector.
+- `kdenlive/src/effects/effectstack/view/effectstackview.cpp`: abertura de efeitos existentes sem duplicação.
 
 Esta implementação mantém os componentes de monitor, inspector e timeline do
 Kdenlive. Não é uma reprodução pixel a pixel do CapCut nem implementa serviços

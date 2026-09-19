@@ -22,3 +22,9 @@ QTreeView, QListView { background: #1b1d20; alternate-background-color: #222428;
 QHeaderView::section { background: #24262b; padding: 6px; border: none; }
 QStatusBar { background: #17181b; }
 QToolTip { background: #303338; color: #f3f5f7; border: 1px solid #4c5057; padding: 6px; }
+QWidget#capthemeInspector { background: #1b1d20; border-bottom: 1px solid #303338; }
+QLabel#capthemeInspectorTitle { font-size: 14px; font-weight: 600; color: #f3f5f7; }
+QLabel#capthemeInspectorHint { color: #a5a9b1; font-size: 11px; }
+QWidget#capthemeInspector QToolButton { border: 1px solid #383b41; border-radius: 5px; padding: 6px; }
+QWidget#capthemeInspector QToolButton:hover { border-color: #76f2e4; background: #253e3e; }
+QWidget#capthemeInspector QToolButton:disabled { color: #777c85; border-color: #292c31; }

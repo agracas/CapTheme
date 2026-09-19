@@ -1231,6 +1231,11 @@ void CollapsibleEffectView::collapseEffect(bool collapse)
     m_collapse->setActive(!collapse);
 }
 
+void CollapsibleEffectView::expandForEditing()
+{
+    m_collapse->setActive(false);
+}
+
 bool CollapsibleEffectView::isCollapsed() const
 {
     return !m_collapse->isActive();

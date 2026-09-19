@@ -677,6 +677,36 @@ bool EffectStackView::isEmpty() const
     return m_model == nullptr ? true : m_model->rowCount() == 0;
 }
 
+bool EffectStackView::editEffect(const QString &effectId)
+{
+    if (!m_model || isLocked()) {
+        return false;
+    }
+    auto effect = std::dynamic_pointer_cast<EffectItemModel>(m_model->getAssetModelById(effectId));
+    if (!effect) {
+        if (!addEffect(effectId)) {
+            return false;
+        }
+        effect = std::dynamic_pointer_cast<EffectItemModel>(m_model->getAssetModelById(effectId));
+    }
+    if (!effect) {
+        return false;
+    }
+    effect->setCollapsed(false);
+    if (effect->isKeyframesHidden()) {
+        effect->setKeyframesHidden(false);
+    }
+    const auto sourceIndex = m_model->getIndexFromItem(effect);
+    m_model->setActiveEffect(sourceIndex.row());
+    const auto index = m_filter->mapFromSource(sourceIndex);
+    if (auto *view = qobject_cast<CollapsibleEffectView *>(m_effectsTree->indexWidget(index))) {
+        view->expandForEditing();
+    }
+    m_effectsTree->setCurrentIndex(index);
+    slotFocusEffect();
+    return true;
+}
+
 void EffectStackView::enableStack(bool enable)
 {
     if (m_model) {

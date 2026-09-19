@@ -85,6 +85,13 @@ protected:
     MaskManager *m_maskManager{nullptr};
 
 private:
+    void setupCapThemeInspector();
+    void updateCapThemeInspector(bool video = false, bool audio = false);
+    QWidget *m_capThemeInspector{nullptr};
+    QLabel *m_capThemeHint{nullptr};
+    QToolButton *m_capThemeTransform{nullptr};
+    QToolButton *m_capThemeCrop{nullptr};
+    QToolButton *m_capThemeVolume{nullptr};
     QAction *m_compositionHelpLink;
     QMenu *m_applyEffectGroups;
     QAction *m_saveEffectStack;

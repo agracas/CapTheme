@@ -55,6 +55,8 @@ public:
     /** @brief Add an effect to the current stack
      */
     bool addEffect(const QString &effectId);
+    /** @brief Open an existing effect's controls, or add it once on explicit request. */
+    bool editEffect(const QString &effectId);
     /** @brief Returns true if effectstack is empty
      */
     bool isEmpty() const;

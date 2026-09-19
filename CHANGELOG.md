@@ -1,5 +1,12 @@
 # Changelog
 
+## Em desenvolvimento
+
+- Painel Details com atalhos para transformação, recorte e volume do clipe selecionado.
+- Acesso direto aos controles nativos de posição, escala, rotação, opacidade e keyframes.
+- Reabertura do efeito existente sem duplicar efeitos ou substituir parâmetros.
+- Estado vazio com orientação e atalhos desabilitados conforme a seleção e o tipo de mídia.
+
 ## v0.1.0-alpha.1
 
 Primeira alpha pública do CapTheme, uma interface inspirada no CapCut construída sobre o Kdenlive.

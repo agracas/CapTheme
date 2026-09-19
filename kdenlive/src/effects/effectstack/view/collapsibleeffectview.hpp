@@ -78,6 +78,8 @@ public:
     const QString getAssetId() const;
     /** @brief Collapse / expand the effect */
     void collapseEffect(bool collapse);
+    /** @brief Reveal parameter controls without toggling an already expanded effect. */
+    void expandForEditing();
     bool isCollapsed() const;
     bool isBuiltIn() const;
 

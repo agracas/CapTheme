@@ -31,6 +31,7 @@
 #include <QComboBox>
 #include <QFontDatabase>
 #include <QFormLayout>
+#include <QLabel>
 #include <QMenu>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -200,6 +201,70 @@ AssetPanel::AssetPanel(QWidget *parent)
     m_dragScrollTimer.setSingleShot(true);
     m_dragScrollTimer.setInterval(200);
     connect(&m_dragScrollTimer, &QTimer::timeout, this, &AssetPanel::checkDragScroll);
+    setupCapThemeInspector();
+}
+
+void AssetPanel::setupCapThemeInspector()
+{
+    if (qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        return;
+    }
+    m_capThemeInspector = new QWidget(this);
+    m_capThemeInspector->setObjectName(QStringLiteral("capthemeInspector"));
+    m_capThemeInspector->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Maximum);
+    auto *layout = new QVBoxLayout(m_capThemeInspector);
+    layout->setContentsMargins(12, 12, 12, 10);
+    layout->setSpacing(8);
+    auto *title = new QLabel(i18n("Clip properties"), m_capThemeInspector);
+    title->setObjectName(QStringLiteral("capthemeInspectorTitle"));
+    layout->addWidget(title);
+    auto *buttons = new QHBoxLayout;
+    auto addButton = [this, buttons](const QString &name, const QString &text, const QString &icon, const QString &effectId) {
+        auto *button = new QToolButton(m_capThemeInspector);
+        button->setObjectName(name);
+        button->setText(text);
+        button->setIcon(QIcon::fromTheme(icon));
+        button->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+        button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+        buttons->addWidget(button);
+        connect(button, &QToolButton::clicked, this, [this, effectId]() {
+            if (!m_effectStackWidget->isVisible() || m_maskManager->isVisible()) {
+                return;
+            }
+            if (!m_effectStackWidget->editEffect(effectId)) {
+                assetPanelWarning(effectId, i18n("This effect is not available for the selected clip."));
+            }
+        });
+        return button;
+    };
+    m_capThemeTransform = addButton(QStringLiteral("capthemeTransform"), i18n("Transform"), QStringLiteral("transform-move"), QStringLiteral("qtblend"));
+    m_capThemeTransform->setToolTip(i18n("Position, scale, rotation, opacity and keyframes. Opens the existing Transform effect or adds it once."));
+    m_capThemeCrop = addButton(QStringLiteral("capthemeCrop"), i18n("Crop"), QStringLiteral("transform-crop"), QStringLiteral("qtcrop"));
+    m_capThemeCrop->setToolTip(i18n("Adjust the crop of the selected video clip."));
+    m_capThemeVolume = addButton(QStringLiteral("capthemeVolume"), i18n("Volume"), QStringLiteral("audio-volume-high"), QStringLiteral("volume"));
+    m_capThemeVolume->setToolTip(i18n("Audio gain and volume keyframes."));
+    layout->addLayout(buttons);
+    m_capThemeHint = new QLabel(m_capThemeInspector);
+    m_capThemeHint->setObjectName(QStringLiteral("capthemeInspectorHint"));
+    m_capThemeHint->setWordWrap(true);
+    layout->addWidget(m_capThemeHint);
+    m_lay->insertWidget(0, m_capThemeInspector);
+    updateCapThemeInspector();
+}
+
+void AssetPanel::updateCapThemeInspector(bool video, bool audio)
+{
+    if (!m_capThemeInspector) {
+        return;
+    }
+    m_capThemeInspector->show();
+    m_capThemeTransform->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtblend")));
+    m_capThemeCrop->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtcrop")));
+    m_capThemeVolume->setEnabled(audio && EffectsRepository::get()->exists(QStringLiteral("volume")));
+    m_capThemeHint->setText(video || audio ? i18n("Open a section to adjust this clip. Use the diamond in the effect controls to add keyframes at the "
+                                                  "playhead; the arrows navigate between them.")
+                                           : i18n("Select a clip in the timeline or project bin to edit its properties. Timeline adjustments affect that "
+                                                  "instance; bin adjustments affect the source clip."));
 }
 
 void AssetPanel::showTransition(int tid, const std::shared_ptr<AssetParameterModel> &transitionModel)
@@ -218,6 +283,9 @@ void AssetPanel::showTransition(int tid, const std::shared_ptr<AssetParameterMod
     m_timelineButton->setVisible(true);
     QSize s = pCore->getCompositionSizeOnTrack(id);
     m_transitionWidget->setModel(transitionModel, s, true);
+    if (m_capThemeInspector) {
+        m_capThemeInspector->hide();
+    }
 }
 
 void AssetPanel::showMix(int cid, const std::shared_ptr<AssetParameterModel> &transitionModel, bool refreshOnly)
@@ -244,6 +312,9 @@ void AssetPanel::showMix(int cid, const std::shared_ptr<AssetParameterModel> &tr
     m_mixWidget->setVisible(true);
     m_switchCompoButton->setCurrentIndex(m_switchCompoButton->findData(transitionModel->getAssetId()));
     m_mixWidget->setModel(transitionModel, QSize(), true);
+    if (m_capThemeInspector) {
+        m_capThemeInspector->hide();
+    }
 }
 
 void AssetPanel::showEffectStack(const QString &itemName, const std::shared_ptr<EffectStackModel> &effectsModel, QSize frameSize, bool showKeyframes)
@@ -309,9 +380,14 @@ void AssetPanel::showEffectStack(const QString &itemName, const std::shared_ptr<
     m_timelineButton->setVisible(enableKeyframes);
     m_timelineButton->setActive(showKeyframes);
     m_effectStackWidget->setModel(effectsModel, frameSize);
+    const bool isClip = id.type == KdenliveObjectType::TimelineClip || id.type == KdenliveObjectType::BinClip;
+    updateCapThemeInspector(isClip && avStack.second, isClip && avStack.first);
     m_maskManager->setOwner(id);
     if (m_showMaskPanel->isChecked()) {
         m_maskManager->setVisible(true);
+        if (m_capThemeInspector) {
+            m_capThemeInspector->hide();
+        }
     } else {
         m_effectStackWidget->setVisible(true);
     }
@@ -370,6 +446,7 @@ void AssetPanel::clear()
     m_effectStackWidget->unsetModel();
     m_maskManager->setOwner(ObjectId(KdenliveObjectType::NoItem, {}));
     m_assetTitle->clear();
+    updateCapThemeInspector();
 }
 
 void AssetPanel::processSplitEffect(bool enable)
@@ -561,6 +638,9 @@ void AssetPanel::sendStandardCommand(int command)
 
 void AssetPanel::slotShowMaskPanel()
 {
+    if (m_capThemeInspector) {
+        m_capThemeInspector->setVisible(!m_showMaskPanel->isChecked());
+    }
     if (m_showMaskPanel->isChecked()) {
         m_effectStackWidget->setVisible(false);
         m_mixWidget->setVisible(false);

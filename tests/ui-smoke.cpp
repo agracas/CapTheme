@@ -50,6 +50,10 @@ static void checkInterface()
         require(monitor->mapToGlobal(QPoint()).x() < stack->mapToGlobal(QPoint()).x(), "inspector is right of preview");
         require(timeline->mapToGlobal(QPoint()).y() > monitor->mapToGlobal(QPoint()).y(), "timeline is below preview");
         require(!window->menuBar()->isVisible(), "compact menu remains active after restoring settings");
+        auto *transform = widget(QStringLiteral("capthemeTransform"));
+        auto *volume = widget(QStringLiteral("capthemeVolume"));
+        require(transform && volume, "clip inspector shortcuts are present");
+        require(!transform->isEnabled() && !volume->isEnabled(), "clip controls are disabled without a selection");
         require(qApp->palette().color(QPalette::Window).lightness() < 50, "dark palette reaches QApplication and QML");
         require(qApp->palette().color(QPalette::Highlight) == QColor(118, 242, 228), "mint selection palette loaded from resource");
 
