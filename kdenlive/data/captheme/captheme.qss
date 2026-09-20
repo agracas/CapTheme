@@ -65,3 +65,9 @@ QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
 QGroupBox { border: 1px solid #36393f; border-radius: 6px; margin-top: 12px; padding-top: 8px; }
 QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 5px; color: #cbd0d7; }
 QSplitter::handle { background: #111214; }
+
+/* Animation controls: outlined diamond between frames, filled at a keyframe. */
+QToolBar#capthemeKeyframes { padding: 2px; spacing: 2px; }
+QToolButton#capthemeKeyframeDiamond { color: #76f2e4; font-size: 20px; min-width: 24px; padding: 0 3px; border-radius: 4px; }
+QToolButton#capthemeKeyframeDiamond:disabled { color: #777c85; }
+QToolButton#capthemeKeyframeEasing, QToolButton#capthemeKeyframeCurves { padding: 4px; border: 1px solid #383b41; border-radius: 4px; }

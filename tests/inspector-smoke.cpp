@@ -5,6 +5,7 @@
 #include <QFileInfo>
 #include <QLineEdit>
 #include <QMainWindow>
+#include <QMenu>
 #include <QScreen>
 #include <QSpinBox>
 #include <QDoubleSpinBox>
@@ -127,10 +128,38 @@ static void exercise()
     QObject *keyframes = nullptr;
     for (auto *o : panel->findChildren<QObject *>()) if (o->inherits("KeyframeContainer")) { keyframes = o; break; }
     check(keyframes, "native keyframe controller exists");
-    bool added = false;
-    check(QMetaObject::invokeMethod(keyframes, "slotAddKeyframe", Q_RETURN_ARG(bool, added), Q_ARG(int, 25)) && added, "second keyframe created");
-    check(QMetaObject::invokeMethod(keyframes, "slotSetPosition", Q_ARG(int, 25)), "seek to second keyframe");
+    auto *diamond = qobject_cast<QToolButton *>(named(QStringLiteral("capthemeKeyframeDiamond")));
+    check(diamond && diamond->isVisible(), "animation diamond is visible beside navigation");
+    check(QMetaObject::invokeMethod(keyframes, "slotSetPosition", Q_ARG(int, 25)), "seek between keyframes");
     QTest::qWait(200);
+    check(diamond->text() == QStringLiteral("◇"), "empty diamond indicates no keyframe");
+    diamond->click();
+    QTest::qWait(200);
+    check(diamond->text() == QStringLiteral("◆"), "diamond adds a keyframe and shows its active state");
+    diamond->click();
+    QTest::qWait(200);
+    check(diamond->text() == QStringLiteral("◇"), "diamond removes the current keyframe");
+    undo->trigger();
+    QTest::qWait(200);
+    check(diamond->text() == QStringLiteral("◆"), "removing a keyframe can be undone");
+    auto *previous = action(QStringLiteral("capthemePreviousKeyframe"));
+    auto *next = action(QStringLiteral("capthemeNextKeyframe"));
+    check(previous && next, "keyframe navigation actions exist");
+    previous->trigger();
+    QTest::qWait(200);
+    check(value(named(QStringLiteral("spinX"))) == 240, "previous keyframe restores the first position");
+    next->trigger();
+    QTest::qWait(200);
+    auto *easing = qobject_cast<QToolButton *>(named(QStringLiteral("capthemeKeyframeEasing")));
+    check(easing && easing->isVisible() && easing->isEnabled() && easing->menu() && easing->menu()->actions().size() > 2, "native interpolation choices are available at a keyframe");
+    auto *curves = qobject_cast<QToolButton *>(named(QStringLiteral("capthemeKeyframeCurves")));
+    check(curves && curves->isEnabled(), "curve editor is available for Transform");
+    curves->click();
+    QTest::qWait(150);
+    check(curves->text() == QStringLiteral("Keyframes"), "curve view offers a return to keyframes");
+    curves->click();
+    QTest::qWait(150);
+    check(curves->text() == QStringLiteral("Curves"), "returning restores the keyframe ruler");
     setValue(QStringLiteral("spinX"), 480);
     check(editor->screen()->grabWindow(editor->winId()).save(qEnvironmentVariable("CAPTHEME_SCREENSHOT")), "real inspector screenshot saved");
 

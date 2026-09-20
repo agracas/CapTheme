@@ -127,6 +127,21 @@ remover keyframes. As setas navegam entre eles; os ajustes usam o desfazer/refaz
 e o formato de projeto do Kdenlive. Na timeline, as mudanças afetam a instância
 selecionada; na biblioteca de mídia, afetam o clipe de origem.
 
+### Animação e keyframes
+
+Nos efeitos animáveis, a barra acima da régua reúne:
+
+- **◇ / ◆**: adiciona ou remove um keyframe no cursor; o losango cheio indica um ponto existente. O primeiro ponto obrigatório segue a proteção do Kdenlive.
+- **Setas**: avançam para o próximo keyframe ou voltam ao anterior.
+- **Easing**: escolhe a interpolação nativa para o keyframe selecionado.
+- **Curves / Keyframes**: alterna entre as curvas dos parâmetros e a régua de pontos.
+- **Menu de opções**: copiar, colar, mover pontos ao cursor e outras operações nativas.
+
+Para animar, ajuste o estado inicial, mova o cursor, clique no losango vazio e
+altere os valores. Os pontos podem ser arrastados na régua. Desfazer/refazer e o
+salvamento usam o projeto original do Kdenlive. Os keyframes são agrupados por
+efeito; esta adaptação não reproduz a separação por propriedade do CapCut.
+
 O controle de rotação pode depender da versão do efeito Transform fornecida pelo MLT.
 
 ![Inspector com parâmetros e keyframes reais](docs/inspector.png)

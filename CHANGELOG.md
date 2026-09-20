@@ -2,6 +2,10 @@
 
 ## Em desenvolvimento
 
+- Barra de keyframes com losango vazio/cheio, navegação, interpolação e alternância explícita para curvas.
+- Operações avançadas de keyframes agrupadas no menu, preservando ações e formato de projeto nativos.
+- Testes do losango, remoção/desfazer, navegação e troca de visualização.
+
 - Inspector organizado em Vídeo, Áudio e Cor, com 19 atalhos para efeitos nativos.
 - Categorias e efeitos acompanham o tipo de mídia e a disponibilidade dos plugins instalados.
 - Testes de adição e persistência de efeitos de áudio/cor, reabertura sem duplicação e troca de categorias preservando keyframes.

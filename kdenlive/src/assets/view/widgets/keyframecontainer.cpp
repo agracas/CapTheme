@@ -206,12 +206,50 @@ KeyframeContainer::KeyframeContainer(std::shared_ptr<AssetParameterModel> model,
     m_time->setRange(0, duration - 1);
 
     m_toolbar->addAction(m_previousKFAction);
-    m_toolbar->addAction(m_addDeleteAction);
+    if (!qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        m_toolbar->setObjectName(QStringLiteral("capthemeKeyframes"));
+        auto *diamond = new QToolButton(parent);
+        diamond->setObjectName(QStringLiteral("capthemeKeyframeDiamond"));
+        diamond->setDefaultAction(m_addDeleteAction);
+        diamond->setToolButtonStyle(Qt::ToolButtonTextOnly);
+        auto refreshDiamond = [this, diamond]() {
+            diamond->setText(m_addDeleteAction->isActive() ? QStringLiteral("◇") : QStringLiteral("◆"));
+            diamond->setAccessibleName(m_addDeleteAction->text());
+        };
+        connect(m_addDeleteAction, &QAction::changed, diamond, refreshDiamond);
+        refreshDiamond();
+        m_toolbar->addWidget(diamond);
+    } else {
+        m_toolbar->addAction(m_addDeleteAction);
+    }
     m_toolbar->addAction(m_nextKFAction);
-    m_toolbar->addAction(m_centerAction);
-    m_toolbar->addAction(m_copyAction);
-    m_toolbar->addAction(m_pasteAction);
-    m_toolbar->addAction(m_selectType);
+    if (qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        m_toolbar->addAction(m_centerAction);
+        m_toolbar->addAction(m_copyAction);
+        m_toolbar->addAction(m_pasteAction);
+        m_toolbar->addAction(m_selectType);
+    } else {
+        m_previousKFAction->setObjectName(QStringLiteral("capthemePreviousKeyframe"));
+        m_nextKFAction->setObjectName(QStringLiteral("capthemeNextKeyframe"));
+        auto *easing = new QToolButton(parent);
+        easing->setObjectName(QStringLiteral("capthemeKeyframeEasing"));
+        easing->setText(i18n("Easing"));
+        easing->setToolTip(i18n("Choose how values change between keyframes"));
+        easing->setPopupMode(QToolButton::InstantPopup);
+        auto *menu = new QMenu(easing);
+        menu->addActions(m_selectType->actions());
+        easing->setMenu(menu);
+        connect(m_selectType, &QAction::changed, easing, [this, easing]() { easing->setEnabled(m_selectType->isEnabled()); });
+        easing->setEnabled(m_selectType->isEnabled());
+        m_toolbar->addWidget(easing);
+        m_viewswitch->setObjectName(QStringLiteral("capthemeKeyframeCurves"));
+        m_viewswitch->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+        auto refreshView = [this]() {
+            m_viewswitch->setText(m_toggleViewAction->isActive() ? i18n("Keyframes") : i18n("Curves"));
+        };
+        connect(m_toggleViewAction, &QAction::changed, m_viewswitch, refreshView);
+        refreshView();
+    }
 
     QAction *seekKeyframe = new QAction(i18n("Seek to Keyframe on Select"), parent);
     seekKeyframe->setCheckable(true);
@@ -281,6 +319,12 @@ KeyframeContainer::KeyframeContainer(std::shared_ptr<AssetParameterModel> model,
     menuAction->setWhatsThis(
         xi18nc("@info:whatsthis", "Opens a list of further actions for managing keyframes (for example: copy to and pasting keyframes from clipboard)."));
     menuAction->setPopupMode(QToolButton::InstantPopup);
+    if (!qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        menuAction->addAction(m_centerAction);
+        menuAction->addAction(m_copyAction);
+        menuAction->addAction(m_pasteAction);
+        menuAction->addSeparator();
+    }
     menuAction->addAction(seekKeyframe);
     menuAction->addAction(copy);
     menuAction->addAction(paste);
@@ -296,13 +340,25 @@ KeyframeContainer::KeyframeContainer(std::shared_ptr<AssetParameterModel> model,
     // Show standard keyframe editor by default
     m_editorviewcontainer->setCurrentIndex(0);
     m_keyframeview->slotOnFocus();
-    m_layout->addRow(m_editorviewcontainer);
+    const bool capTheme = !qEnvironmentVariableIsSet("CAPTHEME_CLASSIC");
+    if (!capTheme) {
+        m_layout->addRow(m_editorviewcontainer);
+    }
     auto *hlay = new QHBoxLayout;
-    hlay->addWidget(m_toolbar);
+    if (capTheme) {
+        // A dedicated row keeps interpolation out of the toolbar overflow
+        // when the inspector is narrow.
+        m_layout->addRow(m_toolbar);
+    } else {
+        hlay->addWidget(m_toolbar);
+    }
     hlay->addWidget(m_time);
     hlay->addStretch();
     hlay->addWidget(m_viewswitch);
     m_layout->addRow(hlay);
+    if (capTheme) {
+        m_layout->addRow(m_editorviewcontainer);
+    }
 
     connect(m_time, &TimecodeDisplay::timeCodeEditingFinished, this, [&]() { slotSetPosition(-1, true); });
     connect(m_keyframeview, &KeyframeView::seekToPos, this, &KeyframeContainer::slotSeekToPos);
@@ -425,6 +481,9 @@ KeyframeContainer::KeyframeContainer(std::shared_ptr<AssetParameterModel> model,
     QMargins mrg = m_layout->contentsMargins();
     m_editorviewcontainer->setFixedHeight(m_editorviewcontainer->currentWidget()->height());
     m_baseHeight = m_editorviewcontainer->height() + m_toolbar->sizeHint().height();
+    if (!qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        m_baseHeight += qMax(m_time->sizeHint().height(), m_viewswitch->sizeHint().height()) + qMax(0, m_layout->verticalSpacing());
+    }
     m_addedHeight = mrg.top() + mrg.bottom() + m_layout->horizontalSpacing();
     if (isColorWheel) {
         addParameter(index);
@@ -1370,6 +1429,9 @@ void KeyframeContainer::slotToggleView()
     }
     m_editorviewcontainer->setFixedHeight(height);
     m_baseHeight = height + m_toolbar->sizeHint().height();
+    if (!qEnvironmentVariableIsSet("CAPTHEME_CLASSIC")) {
+        m_baseHeight += qMax(m_time->sizeHint().height(), m_viewswitch->sizeHint().height()) + qMax(0, m_layout->verticalSpacing());
+    }
     m_fixedHeight = m_addedHeight + m_baseHeight;
     Q_EMIT updateHeight();
 }
