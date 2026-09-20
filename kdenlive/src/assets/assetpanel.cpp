@@ -32,6 +32,8 @@
 #include <QFontDatabase>
 #include <QFormLayout>
 #include <QLabel>
+#include <QGridLayout>
+#include <QTabWidget>
 #include <QMenu>
 #include <QScrollArea>
 #include <QScrollBar>
@@ -218,15 +220,34 @@ void AssetPanel::setupCapThemeInspector()
     auto *title = new QLabel(i18n("Clip properties"), m_capThemeInspector);
     title->setObjectName(QStringLiteral("capthemeInspectorTitle"));
     layout->addWidget(title);
-    auto *buttons = new QHBoxLayout;
-    auto addButton = [this, buttons](const QString &name, const QString &text, const QString &icon, const QString &effectId) {
-        auto *button = new QToolButton(m_capThemeInspector);
+    m_capThemeCategories = new QTabWidget(m_capThemeInspector);
+    m_capThemeCategories->setObjectName(QStringLiteral("capthemeCategories"));
+    m_capThemeCategories->setDocumentMode(true);
+    layout->addWidget(m_capThemeCategories);
+    auto addCategory = [this](const QString &name, const QString &label, bool audio) {
+        auto *page = new QWidget(m_capThemeCategories);
+        page->setObjectName(name);
+        page->setProperty("capthemeAudio", audio);
+        auto *grid = new QGridLayout(page);
+        grid->setContentsMargins(0, 8, 0, 0);
+        grid->setSpacing(5);
+        grid->setColumnStretch(0, 1);
+        grid->setColumnStretch(1, 1);
+        m_capThemeCategories->addTab(page, label);
+        return grid;
+    };
+    auto addButton = [this](QGridLayout *grid, const QString &name, const QString &text, const QString &icon, const QString &effectId, const QString &hint) {
+        auto *button = new QToolButton(grid->parentWidget());
         button->setObjectName(name);
         button->setText(text);
         button->setIcon(QIcon::fromTheme(icon));
         button->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
         button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-        buttons->addWidget(button);
+        button->setProperty("capthemeEffect", effectId);
+        button->setProperty("capthemeHint", hint);
+        button->setProperty("capthemeAudio", grid->parentWidget()->property("capthemeAudio"));
+        const int index = grid->count();
+        grid->addWidget(button, index / 2, index % 2);
         connect(button, &QToolButton::clicked, this, [this, effectId]() {
             if (!m_effectStackWidget->isVisible() || m_maskManager->isVisible()) {
                 return;
@@ -235,15 +256,49 @@ void AssetPanel::setupCapThemeInspector()
                 assetPanelWarning(effectId, i18n("This effect is not available for the selected clip."));
             }
         });
-        return button;
     };
-    m_capThemeTransform = addButton(QStringLiteral("capthemeTransform"), i18n("Transform"), QStringLiteral("transform-move"), QStringLiteral("qtblend"));
-    m_capThemeTransform->setToolTip(i18n("Position, scale, rotation, opacity and keyframes. Opens the existing Transform effect or adds it once."));
-    m_capThemeCrop = addButton(QStringLiteral("capthemeCrop"), i18n("Crop"), QStringLiteral("transform-crop"), QStringLiteral("qtcrop"));
-    m_capThemeCrop->setToolTip(i18n("Adjust the crop of the selected video clip."));
-    m_capThemeVolume = addButton(QStringLiteral("capthemeVolume"), i18n("Volume"), QStringLiteral("audio-volume-high"), QStringLiteral("volume"));
-    m_capThemeVolume->setToolTip(i18n("Audio gain and volume keyframes."));
-    layout->addLayout(buttons);
+    auto *video = addCategory(QStringLiteral("capthemeVideoPage"), i18n("Video"), false);
+    addButton(video, QStringLiteral("capthemeTransform"), i18n("Transform"), QStringLiteral("transform-move"), QStringLiteral("qtblend"),
+              i18n("Position, scale, rotation, opacity and keyframes."));
+    addButton(video, QStringLiteral("capthemeCrop"), i18n("Crop"), QStringLiteral("transform-crop"), QStringLiteral("qtcrop"), i18n("Crop the video image."));
+    addButton(video, QStringLiteral("capthemeVideoFadeIn"), i18n("Fade in"), QStringLiteral("view-right-new"), QStringLiteral("fade_from_black"),
+              i18n("Fade video from black."));
+    addButton(video, QStringLiteral("capthemeVideoFadeOut"), i18n("Fade out"), QStringLiteral("view-left-new"), QStringLiteral("fade_to_black"),
+              i18n("Fade video to black."));
+    addButton(video, QStringLiteral("capthemeChroma"), i18n("Chroma key"), QStringLiteral("color-picker"), QStringLiteral("chroma"),
+              i18n("Make a selected color transparent."));
+    addButton(video, QStringLiteral("capthemeBlur"), i18n("Blur"), QStringLiteral("edit-select-all"), QStringLiteral("box_blur"),
+              i18n("Adjust horizontal and vertical blur."));
+
+    auto *audio = addCategory(QStringLiteral("capthemeAudioPage"), i18n("Audio"), true);
+    addButton(audio, QStringLiteral("capthemeVolume"), i18n("Volume"), QStringLiteral("audio-volume-high"), QStringLiteral("volume"),
+              i18n("Audio gain and volume keyframes."));
+    addButton(audio, QStringLiteral("capthemeBalance"), i18n("Balance"), QStringLiteral("audio-speakers"), QStringLiteral("audiobalance"),
+              i18n("Adjust left and right channel balance."));
+    addButton(audio, QStringLiteral("capthemeAudioFadeIn"), i18n("Fade in"), QStringLiteral("view-right-new"), QStringLiteral("fadein"),
+              i18n("Fade audio in."));
+    addButton(audio, QStringLiteral("capthemeAudioFadeOut"), i18n("Fade out"), QStringLiteral("view-left-new"), QStringLiteral("fadeout"),
+              i18n("Fade audio out."));
+    addButton(audio, QStringLiteral("capthemeEqualizer"), i18n("Equalizer"), QStringLiteral("configure"), QStringLiteral("avfilter.equalizer"),
+              i18n("Adjust gain around a selected frequency."));
+    addButton(audio, QStringLiteral("capthemeCompressor"), i18n("Compressor"), QStringLiteral("configure"), QStringLiteral("avfilter.acompressor"),
+              i18n("Control audio dynamic range."));
+    addButton(audio, QStringLiteral("capthemeNormalize"), i18n("Normalize"), QStringLiteral("audio-volume-high"), QStringLiteral("dynamic_loudness"),
+              i18n("Dynamically adjust loudness to a target level."));
+
+    auto *color = addCategory(QStringLiteral("capthemeColorPage"), i18n("Color"), false);
+    addButton(color, QStringLiteral("capthemeBrightness"), i18n("Brightness"), QStringLiteral("view-brightness"), QStringLiteral("brightness"),
+              i18n("Adjust image intensity with keyframes."));
+    addButton(color, QStringLiteral("capthemeColorAdjust"), i18n("Basic correction"), QStringLiteral("configure"), QStringLiteral("avfilter.eq"),
+              i18n("Brightness, contrast, gamma and saturation."));
+    addButton(color, QStringLiteral("capthemeSaturation"), i18n("Saturation"), QStringLiteral("color-management"), QStringLiteral("frei0r.saturat0r"),
+              i18n("Adjust color saturation."));
+    addButton(color, QStringLiteral("capthemeGamma"), i18n("Gamma"), QStringLiteral("view-brightness"), QStringLiteral("gamma"),
+              i18n("Adjust gamma with keyframes."));
+    addButton(color, QStringLiteral("capthemeColorWheels"), i18n("Color wheels"), QStringLiteral("color-management"), QStringLiteral("lift_gamma_gain"),
+              i18n("Lift, gamma and gain color wheels."));
+    addButton(color, QStringLiteral("capthemeWhiteBalance"), i18n("Color balance"), QStringLiteral("color-picker"),
+              QStringLiteral("frei0r.three_point_balance"), i18n("Balance shadows, midtones and highlights using three color points."));
     m_capThemeHint = new QLabel(m_capThemeInspector);
     m_capThemeHint->setObjectName(QStringLiteral("capthemeInspectorHint"));
     m_capThemeHint->setWordWrap(true);
@@ -258,9 +313,32 @@ void AssetPanel::updateCapThemeInspector(bool video, bool audio)
         return;
     }
     m_capThemeInspector->show();
-    m_capThemeTransform->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtblend")));
-    m_capThemeCrop->setEnabled(video && EffectsRepository::get()->exists(QStringLiteral("qtcrop")));
-    m_capThemeVolume->setEnabled(audio && EffectsRepository::get()->exists(QStringLiteral("volume")));
+    for (auto *button : m_capThemeCategories->findChildren<QToolButton *>()) {
+        const QString effectId = button->property("capthemeEffect").toString();
+        if (effectId.isEmpty()) {
+            continue;
+        }
+        const bool available = EffectsRepository::get()->exists(effectId);
+        const bool compatible = button->property("capthemeAudio").toBool() ? audio : video;
+        button->setEnabled(compatible && available);
+        button->setToolTip(!available    ? i18n("This effect is not installed in this Kdenlive/MLT setup.")
+                           : !compatible ? i18n("Select a clip with the matching media type to use this effect.")
+                                         : button->property("capthemeHint").toString());
+    }
+    const bool hadSelection = m_capThemeCategories->isTabEnabled(0) || m_capThemeCategories->isTabEnabled(1);
+    for (int index = 0; index < m_capThemeCategories->count(); ++index) {
+        const bool isAudio = m_capThemeCategories->widget(index)->property("capthemeAudio").toBool();
+        m_capThemeCategories->setTabEnabled(index, isAudio ? audio : video);
+    }
+    // Keep the user's category for compatible clips; choose a usable category
+    // when switching between audio-only and video-only selections.
+    if (video && !hadSelection) {
+        m_capThemeCategories->setCurrentIndex(0);
+    } else if (audio && !video) {
+        m_capThemeCategories->setCurrentIndex(1);
+    } else if (video && !audio && m_capThemeCategories->currentIndex() == 1) {
+        m_capThemeCategories->setCurrentIndex(0);
+    }
     m_capThemeHint->setText(video || audio ? i18n("Adjust this clip below. Use the diamond to add keyframes.")
                                            : i18n("Select a clip in the timeline or project bin to edit its properties. Timeline adjustments affect that "
                                                   "instance; bin adjustments affect the source clip."));

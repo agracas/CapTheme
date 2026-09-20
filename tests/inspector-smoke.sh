@@ -20,3 +20,15 @@ timeout 90s xvfb-run -a -s '-screen 0 1920x1200x24' \
     > "$root/artifacts/inspector-smoke.log" 2>&1
 cp "$CAPTHEME_TEST_PROJECT" "$root/artifacts/inspector-test.kdenlive"
 python "$root/tests/check-inspector-project.py" "$CAPTHEME_TEST_PROJECT"
+
+# Verify the real media-type gating with separate, fresh projects.
+ffmpeg -v error -i "$testroot/inspector-fixture.mp4" -vn "$testroot/inspector-fixture-audio.wav"
+ffmpeg -v error -i "$testroot/inspector-fixture.mp4" -an -c:v copy "$testroot/inspector-fixture-video.mp4"
+for kind in audio video; do
+    extension=mp4
+    if [[ "$kind" == audio ]]; then extension=wav; fi
+    timeout 60s xvfb-run -a -s '-screen 0 1920x1200x24' \
+        dbus-run-session -- env LD_PRELOAD="$root/artifacts/inspector-smoke.so" CAPTHEME_TEST_MEDIA_KIND="$kind" \
+        "$root/install/bin/kdenlive" --config capthemerc --no-welcome -i "$testroot/inspector-fixture-$kind.$extension" \
+        > "$root/artifacts/inspector-$kind-smoke.log" 2>&1
+done

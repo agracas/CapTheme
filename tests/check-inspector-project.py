@@ -21,3 +21,8 @@ assert first[0] == 240 and last[0] == 480, (first, last)
 assert first[2:4] == last[2:4] == [1440, 810], (first, last)
 assert abs(first[4] - 0.8) < 0.0001 and abs(last[4] - 0.8) < 0.0001
 print("PASS: one Transform, scale 75%, opacity 80%, and two position keyframes persisted.")
+
+ids = [effect.find("property[@name='kdenlive_id']").text
+       for effect in root.iter("filter") if effect.find("property[@name='kdenlive_id']") is not None]
+assert ids.count("volume") == 1 and ids.count("brightness") == 1, ids
+print("PASS: native audio and color effects persisted without duplicates.")

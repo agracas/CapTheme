@@ -17,6 +17,7 @@ class KDualAction;
 class KMessageWidget;
 class QToolButton;
 class QComboBox;
+class QTabWidget;
 class QScrollArea;
 
 class AssetParameterModel;
@@ -89,9 +90,7 @@ private:
     void updateCapThemeInspector(bool video = false, bool audio = false);
     QWidget *m_capThemeInspector{nullptr};
     QLabel *m_capThemeHint{nullptr};
-    QToolButton *m_capThemeTransform{nullptr};
-    QToolButton *m_capThemeCrop{nullptr};
-    QToolButton *m_capThemeVolume{nullptr};
+    QTabWidget *m_capThemeCategories{nullptr};
     QAction *m_compositionHelpLink;
     QMenu *m_applyEffectGroups;
     QAction *m_saveEffectStack;

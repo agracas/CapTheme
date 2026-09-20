@@ -105,9 +105,18 @@ mas não baixa modelos nem valida a qualidade da transcrição.
 
 Na versão de desenvolvimento, selecione um clipe e use os atalhos no painel direito:
 
-- **Transform**: posição X/Y, escala, largura/altura, opacidade, rotação e ponto de rotação.
-- **Crop**: recorte por retângulo, cantos arredondados ou círculo, com preenchimento.
-- **Volume**: ganho de áudio com animação por keyframes.
+| Categoria | Controles nativos |
+| --- | --- |
+| **Vídeo** | Transformação (posição, escala, rotação e opacidade), recorte, fades de entrada/saída, chroma key e desfoque. |
+| **Áudio** | Volume, balanço estéreo, fades de entrada/saída, equalizador, compressor e normalização dinâmica. |
+| **Cor** | Brilho, correção básica (contraste, brilho, gamma e saturação), saturação, gamma, rodas de cor e balanço por três pontos. |
+
+As categorias abrem os controles nativos na pilha de efeitos abaixo. A pilha mantém
+a ordem de processamento de todos os efeitos aplicados; trocar de categoria não
+altera o resultado nem adiciona efeitos. Cliques de áudio só ficam ativos em clipes
+com áudio, e os de vídeo/cor em clipes com imagem. Efeitos ausentes na instalação
+ficam desabilitados com uma explicação no tooltip. Ao selecionar áudio sem vídeo,
+a categoria Áudio é aberta automaticamente.
 
 O primeiro clique adiciona o efeito correspondente; os próximos abrem o efeito já
 existente, preservando seus valores. Sem um clipe selecionado, os atalhos ficam
@@ -130,7 +139,10 @@ Teste do inspector:
 
 O teste importa um vídeo sintético com áudio, altera escala, opacidade e posição,
 confere desfazer/refazer e ausência de duplicação, cria um segundo keyframe e salva
-o projeto. A validação do XML confirma os valores e os dois keyframes persistidos.
+o projeto. O teste também abre as categorias Áudio e Cor, adiciona Volume e Brilho, verifica
+reabertura sem duplicação e desfazer/refazer. A validação do XML confirma os valores,
+os dois keyframes e os efeitos de áudio e cor persistidos. Projetos separados com
+áudio puro e vídeo sem áudio verificam a habilitação das categorias conforme a mídia.
 Os arquivos de teste e a captura ficam em `artifacts/`.
 
 ### Arquivos principais

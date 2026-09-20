@@ -2,6 +2,10 @@
 
 ## Em desenvolvimento
 
+- Inspector organizado em Vídeo, Áudio e Cor, com 19 atalhos para efeitos nativos.
+- Categorias e efeitos acompanham o tipo de mídia e a disponibilidade dos plugins instalados.
+- Testes de adição e persistência de efeitos de áudio/cor, reabertura sem duplicação e troca de categorias preservando keyframes.
+
 - Barra de projeto e navegação por categorias separadas, com ícones acima dos rótulos.
 - Polimento de campos, botões, abas, listas e barras de rolagem em superfícies escuras.
 - Legendas abre a ferramenta nativa de transcrição automática (Whisper/Vosk); menu preserva edição manual, importação, exportação e gerenciamento.

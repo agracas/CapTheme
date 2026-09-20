@@ -9,6 +9,7 @@
 #include <QMenuBar>
 #include <QScreen>
 #include <QTimer>
+#include <QTabWidget>
 #include <QToolBar>
 #include <QToolButton>
 #include <cstdio>
@@ -56,6 +57,10 @@ static void checkInterface()
         auto *volume = widget(QStringLiteral("capthemeVolume"));
         require(transform && volume, "clip inspector shortcuts are present");
         require(!transform->isEnabled() && !volume->isEnabled(), "clip controls are disabled without a selection");
+        auto *categories = qobject_cast<QTabWidget *>(widget(QStringLiteral("capthemeCategories")));
+        require(categories && categories->count() == 3, "inspector has three media categories");
+        for (int i = 0; i < categories->count(); ++i) require(!categories->isTabEnabled(i), "categories are disabled without a selection");
+
         require(qApp->palette().color(QPalette::Window).lightness() < 50, "dark palette reaches QApplication and QML");
         require(qApp->palette().color(QPalette::Highlight) == QColor(118, 242, 228), "mint selection palette loaded from resource");
 

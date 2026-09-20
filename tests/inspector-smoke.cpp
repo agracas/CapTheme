@@ -10,6 +10,7 @@
 #include <QDoubleSpinBox>
 #include <QTest>
 #include <QTimer>
+#include <QTabWidget>
 #include <QToolButton>
 #include <QTreeView>
 #include <cstdio>
@@ -84,6 +85,18 @@ static void exercise()
     tree->selectionModel()->select(index, QItemSelectionModel::ClearAndSelect | QItemSelectionModel::Rows);
     QMetaObject::invokeMethod(tree, "doubleClicked", Q_ARG(QModelIndex, index));
     QTest::qWait(1500);
+    const QString mediaKind = qEnvironmentVariable("CAPTHEME_TEST_MEDIA_KIND");
+    if (!mediaKind.isEmpty()) {
+        auto *tabs = qobject_cast<QTabWidget *>(named(QStringLiteral("capthemeCategories")));
+        check(tabs, "media categories exist");
+        const bool audioOnly = mediaKind == QStringLiteral("audio");
+        check(tabs->isTabEnabled(0) == !audioOnly && tabs->isTabEnabled(2) == !audioOnly, "Video and Color follow actual media streams");
+        check(tabs->isTabEnabled(1) == audioOnly, "Audio follows actual media streams");
+        check(tabs->currentIndex() == (audioOnly ? 1 : 0), "compatible category is selected automatically");
+        check(named(QStringLiteral("capthemeVolume"))->isEnabled() == audioOnly, "Volume follows selected clip audio availability");
+        check(transform->isEnabled() == !audioOnly, "Transform follows selected clip video availability");
+        std::_Exit(0);
+    }
     check(transform->isEnabled(), "video selection enables Transform");
     check(named(QStringLiteral("capthemeVolume"))->isEnabled(), "AV selection enables Volume");
     transform->click();
@@ -120,6 +133,38 @@ static void exercise()
     QTest::qWait(200);
     setValue(QStringLiteral("spinX"), 480);
     check(editor->screen()->grabWindow(editor->winId()).save(qEnvironmentVariable("CAPTHEME_SCREENSHOT")), "real inspector screenshot saved");
+
+    auto *categories = qobject_cast<QTabWidget *>(named(QStringLiteral("capthemeCategories")));
+    check(categories && categories->count() == 3, "Video, Audio and Color categories exist");
+    const int baseline = effects->model()->rowCount();
+    categories->setCurrentIndex(1);
+    QTest::qWait(150);
+    auto *volume = qobject_cast<QToolButton *>(named(QStringLiteral("capthemeVolume")));
+    check(volume && volume->isVisible() && volume->isEnabled(), "Audio category exposes Volume");
+    volume->click();
+    QTest::qWait(300);
+    check(effects->model()->rowCount() == baseline + 1, "Volume adds a native audio effect");
+    volume->click();
+    check(effects->model()->rowCount() == baseline + 1, "reopening Volume does not duplicate it");
+    undo->trigger();
+    QTest::qWait(200);
+    check(effects->model()->rowCount() == baseline, "audio effect addition can be undone");
+    redo->trigger();
+    QTest::qWait(200);
+    check(effects->model()->rowCount() == baseline + 1, "audio effect addition can be redone");
+    categories->setCurrentIndex(2);
+    auto *brightness = qobject_cast<QToolButton *>(named(QStringLiteral("capthemeBrightness")));
+    check(brightness && brightness->isVisible() && brightness->isEnabled(), "Color category exposes Brightness");
+    brightness->click();
+    QTest::qWait(300);
+    check(effects->model()->rowCount() == baseline + 2, "Brightness adds a native color effect");
+    brightness->click();
+    check(effects->model()->rowCount() == baseline + 2, "reopening Brightness does not duplicate it");
+    categories->setCurrentIndex(0);
+    transform->click();
+    QTest::qWait(200);
+    check(value(named(QStringLiteral("spinX"))) == 480, "switching categories preserves Transform keyframes");
+    check(editor->screen()->grabWindow(editor->winId()).save(qEnvironmentVariable("CAPTHEME_SCREENSHOT")), "categorized inspector screenshot saved");
 
     auto *save = action(QStringLiteral("file_save_as"));
     check(save, "save action exists");
